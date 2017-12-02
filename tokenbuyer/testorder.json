@@ -1,0 +1,8 @@
+{
+  "purchase_order": {
+    "bitcoin_tx_hash": "32140eafd1343",
+    "bitcoin_acct": "093287598eafd",
+    "bitcoin_change_acct": "873218691aedf",
+    "eth_amount": "28.46"
+  }
+}
