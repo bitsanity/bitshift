@@ -23,3 +23,10 @@ Scenario:
 8. tokenbuyer calls the token contract to transfer the tokens to the
    corresponding Ethereum address
 
+## Dependencies
+
+* https://github.com/zxing/zxing
+* https://github.com/wg/scrypt
+* http://hsqldb.org/
+* github.com/bitsanity/cryptils
+
