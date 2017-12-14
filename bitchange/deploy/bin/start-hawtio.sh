@@ -1,0 +1,1 @@
+nohup java -jar hawtio-app-1.5.6.jar --port 8088 > hawtio.log &
