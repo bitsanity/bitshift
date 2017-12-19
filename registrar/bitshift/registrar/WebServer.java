@@ -90,11 +90,7 @@ public class WebServer
     try
     {
       in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
- 
       req = in.readLine();
-      System.out.println( "request: " + req + " from " +
-                          sock.getRemoteSocketAddress().toString() + "\n" );
- 
       out = new PrintWriter( sock.getOutputStream(), true );
 
       if ( req.contains("favicon") )
@@ -107,6 +103,9 @@ public class WebServer
                 && req.contains("answer")
               )
       {
+        System.out.println( "request: " + req + " from " +
+                            sock.getRemoteSocketAddress().toString() + "\n" );
+
         String parms = req.split( "\\?" )[1].split(" ")[0];
         String[] nvpairs = parms.split( "&" );
         String ethaddr = nvpairs[0].split( "=" )[1];
@@ -136,8 +135,8 @@ public class WebServer
     }
     catch (Exception e)
     {
-      e.printStackTrace();
       System.out.println( e.getMessage() );
+      e.printStackTrace();
     }
     finally
     {
@@ -176,6 +175,7 @@ public class WebServer
     StringBuffer htmlbuff = new StringBuffer();
 
     htmlbuff
+      .append( "<!DOCTYPE html>\n" )
       .append( "<html>\n" )
       .append( "<head>\n" )
       .append( "  <title>Registrar</title>\n" )
