@@ -17,14 +17,22 @@ import tbox.*;
 public class WebServer
 {
   private static final Executor pool_ = Executors.newFixedThreadPool( 100 );
-  private static String indexhtml_;
   private static String pphrase_;
 
   private static String bitchangeurl_ = "http://localhost:8080/something";
   private static String tokbuyerurl_  = "http://localhost:8080/something";
 
+  private static String tokaddr_;
+  private static String tokname_;
+
   public static void main( String[] args ) throws Exception
   {
+    if (null == args || 3 != args.length)
+      throw new Exception( "Usage: <port> <tokaddr> <tokname>" );
+
+    tokaddr_ = args[1];
+    tokname_ = args[2];
+
     BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
     System.out.print( "Passphrase: " );
     pphrase_ = br.readLine();
@@ -56,10 +64,10 @@ public class WebServer
       }
     }
 
-    Path p = FileSystems.getDefault().getPath( ".", "index.html" );
-    indexhtml_ = new String( Files.readAllBytes(p), "UTF-8" );
-
     ServerSocket socket = new ServerSocket( Integer.parseInt(args[0]) );
+
+    tokaddr_ = args[1];
+    tokname_ = args[2];
 
     while (true)
     {
@@ -84,7 +92,8 @@ public class WebServer
       in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
  
       req = in.readLine();
-      System.out.println( "request: " + req );
+      System.out.println( "request: " + req + " from " +
+                          sock.getRemoteSocketAddress().toString() + "\n" );
  
       out = new PrintWriter( sock.getOutputStream(), true );
 
@@ -93,16 +102,24 @@ public class WebServer
         out.println( "HTTP/1.0 200" );
         out.println( "Content-type: image/x-icon" );
       }
-      else if ( req.contains("ethaddr") )
+      else if (    req.contains("ethaddr")
+                && req.contains("qid")
+                && req.contains("answer")
+              )
       {
-        String ethaddr = req.split( "=" )[1].split( " " )[0];
+        String parms = req.split( "\\?" )[1].split(" ")[0];
+        String[] nvpairs = parms.split( "&" );
+        String ethaddr = nvpairs[0].split( "=" )[1];
+        String qix = nvpairs[1].split( "=" )[1];
+        String answer = nvpairs[2].split( "=" )[1];
 
         if (    null == ethaddr
+             || 0 == ethaddr.length()
              || 42 > ethaddr.length()
              || !ethaddr.toLowerCase().startsWith("0x") )
           throw new Exception( "Invalid Ethereum address: " + ethaddr );
 
-        out.println( btcAddrPage(ethaddr) );
+        out.println( btcAddrPage(ethaddr,qix,answer) );
       }
       else
       {
@@ -118,7 +135,10 @@ public class WebServer
       System.out.println( e.getMessage() );
     }
     catch (Exception e)
-    {}
+    {
+      e.printStackTrace();
+      System.out.println( e.getMessage() );
+    }
     finally
     {
       try
@@ -132,8 +152,21 @@ public class WebServer
     }
   }
  
-  private static String btcAddrPage( String ethaddr ) throws Exception
+  private static String btcAddrPage( String ethaddr, String qix, String answer )
+  throws Exception
   {
+    if (null == ethaddr || 0 == ethaddr.length())
+      throw new Exception( "ETH address is mandatory." );
+
+    if (null == qix || 0 == qix.length())
+      throw new Exception( "Suspicious lack of question index." );
+
+    if (null == answer || 0 == answer.length())
+      throw new Exception( "Need an answer" );
+
+    if (!BrainDeadCaptcha.check(qix, answer) )
+      throw new Exception( "Invalid answer" );
+
     StringBuffer buff = new StringBuffer();
 
     buff.append( "HTTP/1.0 200\n" );
@@ -147,7 +180,7 @@ public class WebServer
       .append( "<head>\n" )
       .append( "  <title>Registrar</title>\n" )
       .append( "</head>\n" )
-      .append( "<h2>Buy Tokens with Bitcoin</h2>\n" );
+      .append( "<body>\n" );
 
     KeyStore ks = new KeyStore();
 
@@ -171,7 +204,8 @@ public class WebServer
       inform( btcaddr.toString(), ethaddr );
     }
 
-    htmlbuff.append( "Please send your BTC to this address:\n<p/>\n" );
+    htmlbuff.append( "<div id=\"sendlabel\">\n" )
+            .append( "Please send BTC to this address:\n</div><p/>\n" );
 
     BufferedImage bi = QR.encode( btcaddr.toString(), 300 ); // pixels
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -181,8 +215,9 @@ public class WebServer
     htmlbuff.append( "<img alt=\"QR code\" src=\"data:image/png;base64," )
             .append( pngB64 )
             .append( "\" />\n<p/>\n" )
+            .append( "<div id=\"btcaddress\">" )
             .append( btcaddr.toString() )
-            .append( "\n<p/>\n" )
+            .append( "</div>\n<p/>\n" )
             .append( "</body>\n" )
             .append( "</html>" );
 
@@ -198,13 +233,45 @@ public class WebServer
   {
     StringBuffer buff = new StringBuffer();
 
-    buff.append( "HTTP/1.0 200\n" );
-    buff.append( "Content-type: text/html\n" );
-    buff.append( "Server-name: bitshift.registrar.WebServer\n" );
-    buff.append( "Content-length: " + indexhtml_.length() + "\n" );
-    buff.append( "\n" );
+    StringBuffer html = new StringBuffer();
+    html.append( "<!DOCTYPE html>\n" )
+        .append( "<html>\n" )
+        .append( "<head>\n" )
+        .append( "  <title>Registrar</title>\n" )
+        .append( "</head>\n" )
+        .append( "<body>\n" )
+        .append( "  <div id=\"heading\">\n" )
+        .append( "  Buy " + tokname_ + " with Bitcoin\n" )
+        .append( "  </div>\n<p/>\n" )
+        .append( "  <div id=\"scalabel\">\n" )
+        .append( "  from smart contract:\n" )
+        .append( "  </div>\n" )
+        .append( "  <div id=\"sca\">\n  " )
+        .append( tokaddr_ )
+        .append( "</div>\n<p/>\n" )
+        .append( "  <form action=\"/registrar\" method=\"GET\">\n" )
+        .append( "  <div id=\"ethaddrprompt\">\n" )
+        .append( "  Ethereum address to receive the tokens:<br/>\n" )
+        .append( "  </div>\n" )
+        .append( "  <input type=\"text\" name=\"ethaddr\" size=\"42\"" )
+        .append(         " maxlength=\"42\" />\n" )
+        .append( "  <p/>\n" )
+        .append( "  <div id=\"captchalabel\">\n" )
+        .append( "    Are you human? Please answer this question:\n" )
+        .append( "  </div><br>\n    " )
+        .append( new BrainDeadCaptcha().toString() )
+        .append( "\n  <p/>\n" )
+        .append( "  <input type=\"submit\" value=\"Next\" />\n" )
+        .append( "</form>\n" )
+        .append( "</body>\n" )
+        .append( "</html>" );
 
-    buff.append( indexhtml_ );
+    buff.append( "HTTP/1.0 200\n" )
+        .append( "Content-type: text/html\n" )
+        .append( "Server-name: bitshift.registrar.WebServer\n" )
+        .append( "Content-length: " + html.toString().length() + "\n" )
+        .append( "\n" )
+        .append( html.toString() );
 
     return buff.toString();
   }

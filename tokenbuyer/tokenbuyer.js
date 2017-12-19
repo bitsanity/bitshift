@@ -11,10 +11,10 @@ const icolib = elib.icocon( ICO );
 
 var tokrate;
 
-//icolib.methods.tokpereth().then( (res) => {
-//  tokrate = res;
-//  console.log( 'tokrate: ', tokrate );
-//} );
+icolib.methods.tokpereth().then( (res) => {
+  tokrate = res;
+  console.log( 'tokrate: ', tokrate );
+} );
 
 tokrate = 1500;
 
