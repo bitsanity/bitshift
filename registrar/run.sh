@@ -2,4 +2,6 @@
 
 source env.sh
 
-java $JLIB -cp $JARS:.:./java bitshift.registrar.WebServer 8000
+echo "ghost\n" | java $JLIB -cp $JARS:.:./java \
+ bitshift.registrar.WebServer $REGISTRARPORT $SCA $TOK \
+ > log.out 2>&1
