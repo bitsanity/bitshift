@@ -1,0 +1,1 @@
+nohup java -jar bitchange-jetty-0.0.1-SNAPSHOT.jar --logging.config=config/logback.xml > jetty_nohup.log &

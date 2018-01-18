@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://jsonschema.net",
+  "type": "object",
+  "properties": {
+    "keyType": {
+      "id": "http://jsonschema.net/keyType",
+      "type": "string"
+    },
+    "key": {
+      "id": "http://jsonschema.net/key",
+      "type": "string"
+    }
+  },
+  "required": [
+    "keyType",
+    "key"
+  ]
+}
+

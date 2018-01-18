@@ -1,0 +1,33 @@
+{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"id": "http://bitsanity.net",
+	"type": "object",
+	"properties": {
+		"purchase_order": {
+			"type": "object",
+			"properties": {
+				"bitcoin_tx_hash": {
+					"id": "http://bitsanity.net/bitcoin_tx_hash",
+					"type": "string"
+				},
+				"bitcoin_acct": {
+					"id": "http://bitsanity.net/bitcoin_acct",
+					"type": "string"
+				},
+				"bitcoin_change_acct": {
+					"id": "http://bitsanity.net/bitcoin_change_acct",
+					"type": "string"
+				},
+				"eth_amount": {
+					"id": "http://bitsanity.net/eth_amount",
+					"type": "number"
+				}
+			},
+			"required": ["bitcoin_tx_hash",
+			"bitcoin_acct",
+			"bitcoin_change_acct",
+			"eth_amount"]
+		}
+	},
+	"required": ["purchase_order"]
+}

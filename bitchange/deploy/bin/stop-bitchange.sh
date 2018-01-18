@@ -1,0 +1,1 @@
+kill $(ps aux | awk '/[b]itchange-jetty/ {print $2}')
