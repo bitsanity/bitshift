@@ -6,13 +6,15 @@ const web3_ =
 exports.web3 = function() { return web3_; }
 
 exports.tokABI = function() {
-  var contents = fs.readFileSync('Token.abi').toString();
+  var contents =
+    fs.readFileSync('./ERC223Token_sol_ERC223Token.abi').toString();
+
   var abiObj = JSON.parse(contents);
   return abiObj;
 }
 
 exports.icoABI = function() {
-  var contents = fs.readFileSync('ICO.abi').toString();
+  var contents = fs.readFileSync('./RTKICO_sol_RTKICO.abi').toString();
   var abiObj = JSON.parse(contents);
   return abiObj;
 }

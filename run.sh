@@ -9,7 +9,7 @@
 
 source ./env.src
 
-geth --light --rinkeby --rpc --rpcapi='db,eth,net,web3,personal' --verbosity 2 >geth.out 2>&1 &
+geth --syncmode "light" --rinkeby --rpc --rpcapi="db,eth,net,web3,personal" --verbosity 2 >> geth.out 2>&1 &
 
 pushd tokenbuyer
 ./run.sh &

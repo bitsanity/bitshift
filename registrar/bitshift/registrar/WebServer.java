@@ -19,8 +19,10 @@ public class WebServer
   private static final Executor pool_ = Executors.newFixedThreadPool( 100 );
   private static String pphrase_;
 
-  private static String bitchangeurl_ = "http://localhost:8080/something";
-  private static String tokbuyerurl_  = "http://localhost:8080/something";
+  private static String bitchangeurl_ =
+    "http://localhost:8008/bitcoin/address/";
+
+  private static String tokbuyerurl_  = "http://localhost:8080/";
 
   private static String tokaddr_;
   private static String tokname_;
@@ -39,6 +41,8 @@ public class WebServer
 
     if (null == pphrase_ || 0 == pphrase_.length())
       throw new Exception( "passphrase required." );
+
+    System.out.println( "\n" );
 
     // catch up on previous attempts to inform first
     KeyStore ks = new KeyStore();
@@ -60,7 +64,8 @@ public class WebServer
         System.out.println( "failed to inform: " +
                             addr.toString() +
                             " => " +
-                            todo[ii] );
+                            todo[ii] + "\n" );
+        e.printStackTrace();
       }
     }
 
@@ -84,7 +89,7 @@ public class WebServer
   private static void serve( Socket sock )
   {
     BufferedReader in;
-    PrintWriter out;
+    PrintWriter out = null;
     String req;
  
     try
@@ -103,8 +108,8 @@ public class WebServer
                 && req.contains("answer")
               )
       {
-        System.out.println( "request: " + req + " from " +
-                            sock.getRemoteSocketAddress().toString() + "\n" );
+        System.out.println(
+          sock.getRemoteSocketAddress().toString() + " " + req );
 
         String parms = req.split( "\\?" )[1].split(" ")[0];
         String[] nvpairs = parms.split( "&" );
@@ -112,10 +117,7 @@ public class WebServer
         String qix = nvpairs[1].split( "=" )[1];
         String answer = nvpairs[2].split( "=" )[1];
 
-        if (    null == ethaddr
-             || 0 == ethaddr.length()
-             || 42 > ethaddr.length()
-             || !ethaddr.toLowerCase().startsWith("0x") )
+        if (!isValidEthAddr(ethaddr))
           throw new Exception( "Invalid Ethereum address: " + ethaddr );
 
         out.println( btcAddrPage(ethaddr,qix,answer) );
@@ -129,14 +131,9 @@ public class WebServer
       out.close();
       sock.close();
     }
-    catch (IOException e)
-    {
-      System.out.println( e.getMessage() );
-    }
     catch (Exception e)
     {
-      System.out.println( e.getMessage() );
-      e.printStackTrace();
+      out.println( errorPage(e) );
     }
     finally
     {
@@ -151,6 +148,35 @@ public class WebServer
     }
   }
  
+  private static String errorPage( Exception e )
+  {
+    StringBuffer buff = new StringBuffer();
+
+    StringBuffer html = new StringBuffer();
+    html.append( "<!DOCTYPE html>\n" )
+        .append( "<html>\n" )
+        .append( "<head>\n" )
+        .append( "  <title>Registrar</title>\n" )
+        .append( "</head>\n" )
+        .append( "<body>\n" )
+        .append( "<tt>\n" )
+
+        .append( e.getMessage() )
+
+        .append( "</tt>\n" )
+        .append( "</body>\n" )
+        .append( "</html>" );
+
+    buff.append( "HTTP/1.0 400 Bad Request\n" )
+        .append( "Content-type: text/html\n" )
+        .append( "Server-name: fred\n" )
+        .append( "Content-length: " + html.toString().length() + "\n" )
+        .append( "\n" )
+        .append( html.toString() );
+
+    return buff.toString();
+  }
+
   private static String btcAddrPage( String ethaddr, String qix, String answer )
   throws Exception
   {
@@ -170,7 +196,7 @@ public class WebServer
 
     buff.append( "HTTP/1.0 200\n" );
     buff.append( "Content-type: text/html\n" );
-    buff.append( "Server-name: bitshift.registrar.WebServer\n" );
+    buff.append( "Server-name: fred\n" );
 
     StringBuffer htmlbuff = new StringBuffer();
 
@@ -268,7 +294,7 @@ public class WebServer
 
     buff.append( "HTTP/1.0 200\n" )
         .append( "Content-type: text/html\n" )
-        .append( "Server-name: bitshift.registrar.WebServer\n" )
+        .append( "Server-name: fred\n" )
         .append( "Content-length: " + html.toString().length() + "\n" )
         .append( "\n" )
         .append( html.toString() );
@@ -286,7 +312,7 @@ public class WebServer
         "}" +
       "}";
 
-    int rc = post( bitchangeurl_, body );
+    int rc = post( bitchangeurl_ + btcaddr, body );
     if (rc > 409)
       throw new Exception( "bitchange is down." );
 
@@ -313,8 +339,14 @@ public class WebServer
     http.connect();
     http.getOutputStream().write( out );
 
-    BufferedReader br =
-      new BufferedReader(new InputStreamReader(http.getInputStream()));
+    BufferedReader br = null;
+
+    int rcode = http.getResponseCode();
+
+    if (rcode >= 300)
+      br = new BufferedReader(new InputStreamReader(http.getErrorStream()));
+    else
+      br = new BufferedReader(new InputStreamReader(http.getInputStream()));
 
     StringBuffer respBuff = new StringBuffer();
     String line = null;
@@ -323,12 +355,25 @@ public class WebServer
 
     br.close();
 
-    line = respBuff.toString().split("\n")[0];
-    int rcode = Integer.parseInt( line.split(" ")[1] );
-
-    System.out.println( toURL + " " + rcode );
+    System.out.println( "post resp: " + rcode +
+                        "\n\nbody:\n" + respBuff.toString() );
 
     return rcode;
+  }
+
+  private static boolean isValidEthAddr( String ethaddr ) throws Exception
+  {
+    final String VALIDS = "0123456789abcdefABCDEF";
+
+    boolean isvalid =    null != ethaddr
+                      && 42 == ethaddr.length()
+                      && ethaddr.toLowerCase().startsWith("0x");
+
+    int ii = 2;
+    while (ii < ethaddr.length() && isvalid)
+      isvalid &= (-1 != VALIDS.indexOf(ethaddr.charAt(ii++)));
+
+    return isvalid;
   }
 
 }
