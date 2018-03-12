@@ -145,7 +145,32 @@ public class BitchangeControllerTest {
 
 		System.err.println("body: " + entity.getBody().toString());
 		assertEquals("Invalid response body", "{\"@class\":\"com.bitsanity.bitchange.canonical.RestMessage\",\"command\":\"/bitcoin/address/" + address 
-				+ "\",\"result\":" + RestMessage.AUTH_RESULT_CODE_INVALID_KEY_UPDATE + ",\"message\":\"Trying to add invalid address to watch: " + address + "\"}",
+				+ "\",\"result\":" + RestMessage.AUTH_RESULT_CODE_INVALID_KEY_UPDATE + ",\"message\":\"Trying to add invalid address to watch: " + address + "; " 
+				+ "Checksum does not validate\"}",
+			entity.getBody().toString());
+		watchedAddresses = statistics.getWatchedAddresses();
+		assertFalse("invalid watched address list", watchedAddresses.isEmpty());
+		assertFalse("address still being watched", watchedAddresses.contains(address));	
+	}
+
+	@Test
+	public void testAddInvalidNetworkAddress() {
+		String address = "1KnCio8PZJQ4cM7BQWHBKNm7JJPXcA4Zv1";
+		
+		//test
+		Set<String> watchedAddresses = statistics.getWatchedAddresses();
+		assertFalse("invalid watched address list", watchedAddresses.isEmpty());
+		assertFalse("address already being watched", watchedAddresses.contains(address));
+		
+		ResponseEntity<Respondable> entity = new TestRestTemplate().postForEntity("http://localhost:" + this.port + BitchangeController.URL_WALLET_ADDRESS_MGMT,
+			null, Respondable.class, address);
+
+		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, entity.getStatusCode());
+
+		System.err.println("body: " + entity.getBody().toString());
+		assertEquals("Invalid response body", "{\"@class\":\"com.bitsanity.bitchange.canonical.RestMessage\",\"command\":\"/bitcoin/address/" + address 
+				+ "\",\"result\":" + RestMessage.AUTH_RESULT_CODE_INVALID_KEY_UPDATE + ",\"message\":\"Trying to add invalid address to watch: " + address + "; "
+				+ "Version code of address did not match acceptable versions for network: 0 not in [111, 196]\"}",
 			entity.getBody().toString());
 		watchedAddresses = statistics.getWatchedAddresses();
 		assertFalse("invalid watched address list", watchedAddresses.isEmpty());

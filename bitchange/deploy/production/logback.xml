@@ -1,4 +1,4 @@
-<configuration>
+<configuration scan="true">
 
 	<conversionRule conversionWord="level" converterClass="com.bitsanity.bitchange.utils.logging.LogLevelConverter" />
 
@@ -92,6 +92,10 @@
 	</logger>
 
 	<logger name="org.bitcoinj.core.PeerSocketHandler" level="ERROR" additivity="false">
+		<appender-ref ref="FILE" />
+	</logger>
+
+	<logger name="org.bitcoinj.wallet.WalletFiles" level="WARN" additivity="false">
 		<appender-ref ref="FILE" />
 	</logger>
 

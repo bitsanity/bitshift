@@ -86,7 +86,7 @@ public class CryptographyService {
 	private String aesKeyHex;
 
 	private KeyStore keystore = null;
-	private PrivateKey privateKey;
+	private PrivateKey privateKey = null;
 	private PublicKey publicKey = null;
 	private SecretKey aesKey;
 
@@ -434,8 +434,12 @@ public class CryptographyService {
 		return new String(decryptedMessageInBytes);
 	}
 
-	public String sign(String data, PrivateKey pvtKey)
-			throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+	public String sign(String data, PrivateKey pvtKey) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+		if (pvtKey == null) {
+			//no private key (or keystore) defined
+			return "";
+		}
+		
 		// TODO use pool of initialized signature engines?
 
 		long timeSignGet = System.currentTimeMillis();

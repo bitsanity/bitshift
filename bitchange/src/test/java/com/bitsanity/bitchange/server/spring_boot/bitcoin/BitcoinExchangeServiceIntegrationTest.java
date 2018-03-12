@@ -162,7 +162,8 @@ public class BitcoinExchangeServiceIntegrationTest extends AbstractDatabaseInteg
             System.out.println("Sending " + value.toFriendlyString() + " (includes brokerage fee).");
             
             // Now send the coins back! Send with a small fee attached to ensure rapid confirmation.
-            final Coin amountToSend = value.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
+            //final Coin amountToSend = value.subtract(Transaction.REFERENCE_DEFAULT_MIN_TX_FEE);
+            final Coin amountToSend = value;
             
             //Wallet.SendResult sendResult = kit.wallet().sendCoins(kit.peerGroup(), exchanger.getWatchedAddresses().get(0), amountToSend);
             SendRequest request = SendRequest.to(exchanger.getWatchedAddresses().get(0), amountToSend );

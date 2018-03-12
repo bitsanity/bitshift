@@ -341,7 +341,7 @@ public class BitcoinExchangeService {
 		try {
 			addr = Address.fromBase58(kit.params(), address);
 		} catch (AddressFormatException e) {
-			String msg = "Trying to add invalid address to watch: " + address;
+			String msg = "Trying to add invalid address to watch: " + address + "; " + e.getMessage();
 			LOGGER.error(msg, e);
 			throw new AddressException(msg, e);
 		}
@@ -388,7 +388,7 @@ public class BitcoinExchangeService {
 
 	private void purchaseCoins(Transaction tx, boolean retry) throws ExchangeException {
 		Coin value = tx.getValueSentToMe(kit.wallet());
-		LOGGER.info("Purchasing coins for : " + value.toFriendlyString() + " for transaction: " + tx);
+		LOGGER.debug("Purchasing coins for : " + value.toFriendlyString() + " for transaction: " + tx);
 
 		//deduct fee
 		if (value.isLessThan(brokerageCoin)) {
@@ -398,6 +398,7 @@ public class BitcoinExchangeService {
 			throw new ExchangeException(msg);
 		}
 		value = value.subtract(brokerageCoin);
+		LOGGER.info("Purchasing coins (after brokerage cost) for: " + value.toFriendlyString() + " for transaction: " + tx);
 		
 		//get Ethereum exchange rate
 		Quote quote = market.getMostRecentQuote(value);
