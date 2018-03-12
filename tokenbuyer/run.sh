@@ -1,3 +1,5 @@
 #!/bin/bash
 
-node tokenbuyer $TOKBUYERPORT > log.out 2>&1 &
+source ../env.src
+
+node tokenbuyer $TOKBUYERPORT >> log.out 2>&1 &
